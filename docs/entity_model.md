@@ -24,6 +24,10 @@ erDiagram
     SOURCES ||--o{ MATCH_TEAM_STATS : "supplies"
     SOURCES ||--o{ SCRAPE_RUNS : "executes"
     SCRAPE_RUNS ||--o{ RAW_DOCUMENTS : "downloads"
+    SCRAPE_RUNS ||--o{ HELD_RECORDS : "holds"
+    SOURCES ||--o{ HELD_RECORDS : "publishes unresolved"
+    SOURCES ||--o{ SOURCE_COVERAGE : "offers"
+    COMPETITIONS ||--o{ SOURCE_COVERAGE : "described by"
     SOURCES ||--o{ TEAM_SOURCES : "identifies"
     TEAMS ||--o{ TEAM_SOURCES : "mapped in"
     SOURCES ||--o{ MATCH_SOURCES : "identifies"
@@ -274,12 +278,14 @@ A single execution of a collection process against one source.
 | target         | Description of the batch of data requested                   | String    | 200              | Not Null                                       |
 | started_at     | Moment the run began                                         | DateTime  | -                | Not Null                                       |
 | finished_at    | Moment the run ended                                         | DateTime  | -                | Optional                                       |
-| status         | Outcome of the run                                           | String    | 20               | Not Null, Values: running, ok, failed, partial |
+| status         | Outcome of the run                                           | String    | 20               | Not Null, Values: running, ok, failed, partial, abandoned |
 | items_found    | Number of items located at the source                        | Integer   | 10               | Optional                                       |
 | items_upserted | Number of items inserted or updated in the database          | Integer   | 10               | Optional                                       |
+| items_failed   | Number of items abandoned after exhausting their attempts    | Integer   | 10               | Optional                                       |
+| resume_point   | Reference to the last item processed, from which an interrupted run continues | String | 200 | Optional                       |
 | error          | Detail of the failure when the run does not complete cleanly | String    | 2000             | Optional                                       |
 
-**Constraints:** The finish moment must be later than the start moment. A run in status running may not have a finish moment.
+**Constraints:** The finish moment must be later than the start moment. A run in status running may not have a finish moment. At most one run per source and target may hold status running at any moment. A run in status partial must carry a resume point.
 
 ### RAW_DOCUMENTS
 
@@ -293,9 +299,13 @@ Verbatim copy of every document downloaded from a source, kept for reprocessing.
 | content_hash  | Digest of the content, used to avoid reprocessing duplicates  | String    | 64               | Not Null, Unique                       |
 | status_code   | Response code returned by the server                          | Integer   | 10               | Not Null                               |
 | payload       | Full content of the document exactly as received              | String    | 1000000          | Not Null                               |
+| attempts      | Number of attempts made before the document was obtained      | Integer   | 10               | Not Null                               |
 | fetched_at    | Moment the document was downloaded                            | DateTime  | -                | Not Null                               |
 | parsed_at     | Moment the document was successfully parsed                   | DateTime  | -                | Optional                               |
+| reading_version | Version of the interpretation applied the last time the document was parsed | String | 20      | Optional                               |
 | parse_error   | Detail of the failure raised while parsing the document       | String    | 2000             | Optional                               |
+
+**Constraints:** A document carrying a parsed moment must also carry the reading version used. Attempts may not exceed the retry limit the collection policy allows.
 
 ### TEAM_SOURCES
 
@@ -338,6 +348,41 @@ Correspondence between a competition in the system and the identifier a source a
 
 **Constraints:** The combination of source and external identifier must be unique.
 
+### HELD_RECORDS
+
+A published value that could not be confidently bound to a known entity and is waiting for a person to resolve it.
+
+| Attribute       | Description                                                                  | Data Type | Length/Precision | Validation Rules                            |
+|-----------------|------------------------------------------------------------------------------|-----------|------------------|---------------------------------------------|
+| id              | Unique identifier of the held record                                         | Long      | 19               | Primary Key, Sequence                       |
+| scrape_run_id   | Collection run that held the record                                          | Long      | 19               | Not Null, Foreign Key (SCRAPE_RUNS.id)      |
+| source_id       | Source that published the value                                              | Long      | 19               | Not Null, Foreign Key (SOURCES.id)          |
+| held_kind       | Kind of entity the value was meant to name                                   | String    | 20               | Not Null, Values: team, match, player       |
+| published_value | The name or reference exactly as the source published it                     | String    | 200              | Not Null                                    |
+| context         | Where the value appeared, so a reviewer can judge it                         | String    | 500              | Optional                                    |
+| candidates      | The known entities considered and how closely each matched                   | String    | 2000             | Optional                                    |
+| status          | Whether the record is still waiting, was resolved, or was discarded          | String    | 20               | Not Null, Values: pending, resolved, discarded |
+| resolved_ref    | Identifier of the entity the value was finally bound to, of the held kind    | Long      | 19               | Optional                                    |
+| held_at         | Moment the record was held                                                   | DateTime  | -                | Not Null                                    |
+| resolved_at     | Moment a person resolved or discarded the record                             | DateTime  | -                | Optional                                    |
+
+**Constraints:** The combination of source, held kind and published value must be unique while the status is pending. A record in status resolved must carry both a resolved reference and a resolved moment, and a record in status pending must carry neither. The resolved reference names an entity of the held kind: a team, a match or a player.
+
+### SOURCE_COVERAGE
+
+A statement of which statistics a source actually publishes for a competition, so that data never offered is not mistaken for data not yet collected.
+
+| Attribute      | Description                                                            | Data Type | Length/Precision | Validation Rules                        |
+|----------------|------------------------------------------------------------------------|-----------|------------------|-----------------------------------------|
+| id             | Unique identifier of the coverage statement                            | Long      | 19               | Primary Key, Sequence                   |
+| source_id      | Source the statement describes                                         | Long      | 19               | Not Null, Foreign Key (SOURCES.id)      |
+| competition_id | Competition the statement applies to                                   | Long      | 19               | Not Null, Foreign Key (COMPETITIONS.id) |
+| statistic      | Name of the statistic the statement refers to                          | String    | 50               | Not Null                                |
+| is_offered     | Whether the source publishes this statistic for this competition       | Boolean   | 1                | Not Null                                |
+| first_season   | Earliest season for which the source publishes it                      | String    | 20               | Optional                                |
+
+**Constraints:** The combination of source, competition and statistic must be unique. A statement where the statistic is not offered may not carry a first season.
+
 ### BOOKMAKERS
 
 Betting operators whose odds are recorded as a market reference.
@@ -377,6 +422,8 @@ Vector of predictive features computed for one team ahead of one match, with its
 | as_of               | Cutoff instant bounding the information usable in the computation        | DateTime  | -                | Not Null                           |
 | feature_set_version | Version of the feature set applied                                       | String    | 20               | Not Null                           |
 | features            | Computed features and their values in structured form                    | String    | 4000             | Not Null                           |
+| is_complete         | Whether every variable the version defines could be computed             | Boolean   | 1                | Not Null                           |
+| history_matches     | Number of the team's earlier matches available before the cutoff         | Integer   | 10               | Not Null                           |
 | computed_at         | Moment the computation was executed                                      | DateTime  | -                | Not Null                           |
 
 **Constraints:** The combination of match, team, feature set version and cutoff instant must be unique. The computation may only consume matches kicking off before the cutoff instant and odds captured before that same instant. The cutoff instant may not be later than the kickoff of the match.
@@ -513,8 +560,9 @@ Period during which a player is unavailable to a team through injury, suspension
 | end_date   | Expected or actual return date, empty while unknown          | Date      | -                | Optional                                                                  |
 | reason     | Cause of the unavailability                                  | String    | 30               | Not Null, Values: injury, suspension, international_duty, personal, other |
 | status     | Degree of certainty about the absence                        | String    | 20               | Not Null, Values: out, doubtful                                           |
+| origin     | Whether the period was published by a source or worked out from absence in lineups | String | 20 | Not Null, Values: reported, derived                                       |
 
-**Constraints:** The end date must be later than the start date.
+**Constraints:** The end date must be later than the start date. A derived period may not overlap a reported period for the same player, because the two would count the same absence twice. A derived period may not carry a reason other than other, since absence from a squad does not reveal its cause.
 
 ### SHOTS
 

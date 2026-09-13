@@ -33,6 +33,8 @@ rectangle "janis-soccer-stat" {
     usecase "UC-012\nPredict Scheduled Match" as UC012
     ' Traces to FR-025
     usecase "UC-013\nDerive Player Absences" as UC013
+    ' Traces to FR-010
+    usecase "UC-014\nResolve Held Record" as UC014
 }
 
 engineer --> UC001
@@ -41,6 +43,7 @@ engineer --> UC003
 engineer --> UC004
 engineer --> UC005
 engineer --> UC006
+engineer --> UC014
 
 operator --> UC007
 
@@ -61,6 +64,13 @@ note bottom of UC005
   Collection use cases must resolve
   the publishing source's team name
   to a known team before storing data.
+end note
+
+note bottom of UC014
+  UC-001 to UC-005 hold whatever they
+  cannot bind confidently. UC-014 is
+  where a person clears that queue,
+  for teams, matches and players alike.
 end note
 
 @enduml

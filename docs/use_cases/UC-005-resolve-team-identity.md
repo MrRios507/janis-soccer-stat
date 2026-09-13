@@ -55,15 +55,14 @@
 2. System leaves the records that depend on that name unstored.
 3. Use case continues at step 9.
 
-### A4: Held Name Resolved By The Data Engineer
+### A4: Name Already Resolved By A Review
 
-**Trigger:** Data Engineer reviews a name held by an earlier collection (step 2)  
+**Trigger:** The name was held by an earlier collection and a person has since resolved it (step 3)  
 **Flow:**
 
-1. System shows the held name together with the candidates it considered.
-2. Data Engineer either binds the name to an existing team or registers a new team for it.
-3. System records the binding and releases the held records for collection.
-4. Use case continues at step 9.
+1. System finds the binding recorded when the held record was resolved.
+2. System reuses that binding without comparing names again.
+3. Use case continues at step 9.
 
 ## Postconditions
 
@@ -99,4 +98,4 @@ Holding a name never halts the collection. Everything that does not depend on th
 
 ### BR-005: Registering A New Team Is A Human Decision
 
-The system never creates a team on its own. A name with no confident candidate may be a genuinely new club or a new spelling of an existing one, and only a person can tell the two apart.
+The system never creates a team on its own. A name with no confident candidate may be a genuinely new club or a new spelling of an existing one, and only a person can tell the two apart. That decision is taken while clearing the review queue, described in UC-014.
