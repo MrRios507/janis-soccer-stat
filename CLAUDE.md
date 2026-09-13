@@ -1,0 +1,155 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Current state
+
+Specifications only. There is no source code, no build, no lint, and no test command yet.
+Do not invent them — when the first code lands, replace this section with the real commands.
+
+The planned stack is fixed by constraints in `docs/requirements.md`: PostgreSQL 16+ (C-001)
+and Python 3.11+ (C-002).
+
+## What this project is
+
+A post-match scraper and an independent football database for the five major European
+men's leagues, built so that outcome probabilities for unplayed matches can be estimated
+and honestly measured against the betting market.
+
+## Method: AI Unified Process
+
+This project follows the AI Unified Process (https://unifiedprocess.ai). Before making
+product, domain, or architecture decisions, read `docs/vision.md`, `docs/requirements.md`
+and `docs/entity_model.md`.
+
+1. Requirements derive from the vision. Anything absent from `docs/vision.md` is at risk
+   of being dropped when a downstream artifact is regenerated — add it upstream first.
+2. When requirements change, reconcile the entity model in the same pass.
+3. When something is wrong, edit the specification and regenerate. Do not patch code and
+   leave the spec behind.
+4. Requirement identifiers (FR-, NFR-, C-) are the traceability spine. Never renumber or
+   reuse them. Retire a requirement by setting its Status to `Rejected` or `Deferred`.
+5. Do not implement a use case before its `UC-*.md` specification exists.
+6. The diagram precedes the specifications. `use-case-spec` takes each `UC-XXX` id and
+   name verbatim from `docs/use_cases.puml`; a spec written without a diagram entry is
+   orphaned. Filenames are `UC-XXX-<kebab-case of the diagram name>.md`.
+7. Use case steps describe what the system achieves, never how. No SQL, HTTP, file
+   formats, or class names — the bundled validator rejects them:
+
+   ```bash
+   python3 ~/.claude/plugins/marketplaces/ai-unified-process-marketplace/aiup-core/skills/use-case-spec/scripts/validate_use_case.py --strict docs/use_cases/UC-*.md
+   ```
+
+8. `BR-XXX` business-rule ids restart at `BR-001` in every use case file; the file is
+   their namespace. Cite another file's rule as `UC-005 BR-002`.
+
+## Document map
+
+| File | Role |
+|------|------|
+| `docs/vision.md` | AIUP artifact. Mission, scope, measurable goals. Root of the chain. |
+| `docs/requirements.md` | AIUP artifact. FR / NFR / Constraints catalogs. |
+| `docs/entity_model.md` | AIUP artifact. Canonical data model. |
+| `docs/use_cases.puml` | AIUP artifact. Actors and use cases. Owns every `UC-XXX` id and name. |
+| `docs/use_cases/UC-*.md` | AIUP artifact. One specification per use case. |
+
+`docs/` holds AIUP artifacts only. Implementation notes belong in code or in this file,
+never as loose documents beside the specifications, where they drift out of sync.
+
+
+## Language rule
+
+Every AIUP artifact is written in **English**. This is not cosmetic: the official
+`requirements` skill enforces a hard gate that every functional requirement matches
+`As a [role], I want [goal] so that [benefit]`, and `Priority`, `Status`, `Category`,
+`Data Type` and `Validation Rules` are closed English vocabularies.
+
+Conversation with the user is in **Spanish**.
+
+## Editing `entity_model.md`
+
+The format is enforced by the AIUP `entity-model` skill. Violating it silently breaks the
+tooling:
+
+- The Mermaid diagram carries entity names and relationships **only**. No attribute blocks.
+- Every entity is a `###` heading in UPPER_SNAKE_CASE, followed by one sentence, followed by
+  a table with exactly these columns: `Attribute | Description | Data Type | Length/Precision | Validation Rules`.
+- Data Type is a closed set: `Long`, `String`, `Integer`, `Decimal`, `Boolean`, `Date`,
+  `DateTime`. Never SQL or ORM types. `Date` and `DateTime` use `-` as Length/Precision.
+- Validation Rules is a closed set, one row per cell, never combined: `Primary Key, Sequence` /
+  `Not Null` / `Not Null, Unique` / `Not Null, Foreign Key (TABLE.id)` / `Optional` /
+  `Not Null, Min: X, Max: Y` / `Not Null, Values: A, B, C` / `Not Null, Format: Email`.
+  Never `Min:` without `Max:`. Never an empty cell.
+- Nullable foreign keys are marked `Optional`, with the referenced entity named in the
+  Description column — the closed set has no optional-FK rule.
+- Multi-column rules go in a `**Constraints:**` line after the table.
+
+## Domain invariants
+
+These are the rules that make the project work; breaking them is not caught by tests.
+
+**The `as_of` cutoff.** Every row in `MATCH_FEATURES` and `PREDICTIONS` carries `as_of`.
+Computation may read only matches kicking off before it and odds recorded before it. This is
+the sole defense against data leakage, which is what produces a model scoring 70% in backtest
+and 48% in production. Evaluation must be temporal, never a random split.
+
+**Statistics are stored long, not wide.** One row per team per match in `MATCH_TEAM_STATS`,
+never `home_shots`/`away_shots` columns. Goals live only in `MATCHES`; join, do not duplicate.
+
+**Collection is idempotent.** Every write is an upsert keyed on a uniqueness constraint.
+Reruns are normal and must never duplicate rows.
+
+**Raw documents are retained.** Parsers will be wrong and the error will surface months
+later. Reprocess from `RAW_DOCUMENTS`; never re-request the source to fix a parse bug.
+
+**Team name matching never guesses.** Below the confidence threshold, a match is held for
+manual review. One wrongly mapped team silently corrupts the entire history of two clubs.
+
+**xG is derived from shots, not ingested pre-aggregated**, where the source exposes shot-level
+data, so `SHOTS` and `MATCH_TEAM_STATS.xg` must agree within a source.
+
+## Data sources
+
+Three free sources, each with a distinct job. They complement rather than compete.
+
+| Source | Job | Covers | Suggested `rate_limit_ms` |
+|---|---|---|---|
+| football-data.co.uk | Results, odds, basic stats | ~1993 onward | 0 (plain file download) |
+| Understat | Shot-level expected goals | Big five, 2014-15 onward | 2000 |
+| FBref | Players, lineups, advanced team stats | Advanced stats ~2017-18 onward | 6000 |
+
+Parsing traps, each of which costs an afternoon if unknown:
+
+- **FBref** hides most tables inside HTML comments (`<!-- ... -->`). Parsing the document
+  directly finds nothing and looks like the page changed. Extract the comments, then parse
+  their contents.
+- **FBref** rate-limits strictly and actively; exceeding it earns a temporary block. Check
+  its current bot policy before a bulk run and prefer slower.
+- **Understat** ships its data hex-escaped inside a `<script>`, as
+  `JSON.parse('\x7B\x22id\x22...')`. Unescape before parsing.
+- **football-data.co.uk** marks closing odds with a **`C` prefix**: `B365H` is Bet365's
+  opening home price, `B365CH` the closing one. Only the closing price is the benchmark.
+  `MaxC` and `AvgC` (market maximum and average at close) are usually better references
+  than any single operator. League codes: `E0`, `SP1`, `D1`, `I1`, `F1`.
+
+Which source feeds what: football-data fills matches, odds and basic team stats; Understat
+fills shots, from which `MATCH_TEAM_STATS.xg` is summed; FBref fills players, lineups,
+venues, referees and the non-shot team stats. `MATCH_TEAM_STATS` is therefore written by
+more than one source, which is why every row names its own.
+
+To convert odds to probabilities, remove the operator's margin:
+`p = (1 / price) / sum of (1 / price) over the three outcomes`. Score with log loss, never
+accuracy — accuracy rewards always naming the favourite.
+
+Two indexes carry the whole workload: `(team_id, kickoff_utc)` on matches, which recent-form
+computation hits constantly, and a trigram index on the normalized team alias, which backs
+team name resolution.
+
+First model should be Dixon-Coles or bivariate Poisson over expected goals — interpretable,
+trains on little data, and a fair baseline before anything heavier.
+
+## Scraping conduct
+
+Sources are free and rate-limited, and their terms tolerate slow personal use at best.
+One sequential worker, never parallel, honoring `SOURCES.rate_limit_ms`. Collected data is
+personal-use only and must not be redistributed (C-007).

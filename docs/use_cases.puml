@@ -1,0 +1,66 @@
+@startuml Use Cases Overview
+left to right direction
+
+actor "Data Engineer" as engineer
+actor "Operator" as operator
+actor "Analyst" as analyst
+actor "Modeler" as modeler
+
+rectangle "janis-soccer-stat" {
+    ' Traces to FR-001, FR-011, FR-012, FR-013
+    usecase "UC-001\nLoad Historical Match Data" as UC001
+    ' Traces to FR-002
+    usecase "UC-002\nCollect Match Shots" as UC002
+    ' Traces to FR-003
+    usecase "UC-003\nCollect Team Statistics" as UC003
+    ' Traces to FR-004
+    usecase "UC-004\nCollect Lineups" as UC004
+    ' Traces to FR-008, FR-009, FR-010
+    usecase "UC-005\nResolve Team Identity" as UC005
+    ' Traces to FR-006, FR-007
+    usecase "UC-006\nReprocess Retained Documents" as UC006
+    ' Traces to FR-005, FR-022
+    usecase "UC-007\nMonitor Collection Run" as UC007
+    ' Traces to FR-023, FR-024
+    usecase "UC-008\nReport Data Coverage" as UC008
+    ' Traces to FR-014, FR-015, FR-016
+    usecase "UC-009\nCompute Match Features" as UC009
+    ' Traces to FR-017, FR-018
+    usecase "UC-010\nTrain Prediction Model" as UC010
+    ' Traces to FR-020, FR-021
+    usecase "UC-011\nEvaluate Model Against Market" as UC011
+    ' Traces to FR-019
+    usecase "UC-012\nPredict Scheduled Match" as UC012
+    ' Traces to FR-025
+    usecase "UC-013\nDerive Player Absences" as UC013
+}
+
+engineer --> UC001
+engineer --> UC002
+engineer --> UC003
+engineer --> UC004
+engineer --> UC005
+engineer --> UC006
+
+operator --> UC007
+
+analyst --> UC008
+analyst --> UC012
+
+modeler --> UC009
+modeler --> UC010
+modeler --> UC011
+modeler --> UC013
+
+UC001 ..> UC005 : <<include>>
+UC002 ..> UC005 : <<include>>
+UC003 ..> UC005 : <<include>>
+UC004 ..> UC005 : <<include>>
+
+note bottom of UC005
+  Collection use cases must resolve
+  the publishing source's team name
+  to a known team before storing data.
+end note
+
+@enduml
