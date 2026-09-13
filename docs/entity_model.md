@@ -134,6 +134,9 @@ Football tournaments, covering domestic leagues, cups and continental competitio
 | confederation | Confederation that organises the competition                         | String    | 20               | Optional                                               |
 | tier          | Level in the national pyramid, where one is the top division         | Integer   | 10               | Optional                                               |
 | gender        | Gender category of the competition                                   | String    | 10               | Not Null, Values: male, female                         |
+| is_collected  | Whether the system currently collects this competition               | Boolean   | 1                | Not Null                                               |
+
+**Constraints:** A competition withdrawn from collection keeps every season, match and statistic already gathered for it.
 
 ### SEASONS
 
@@ -265,6 +268,7 @@ Catalogue of external data providers that feed the system.
 | name          | Commercial name of the source                                  | String    | 100              | Not Null              |
 | base_url      | Root address from which data is collected                      | String    | 200              | Not Null              |
 | rate_limit_ms | Minimum wait in milliseconds between consecutive requests      | Integer   | 10               | Not Null              |
+| rate_limit_is_assumed | Whether that wait was assumed by the system rather than stated by the source | Boolean | 1     | Not Null              |
 | is_active     | Whether the source is currently being collected                | Boolean   | 1                | Not Null              |
 
 ### SCRAPE_RUNS

@@ -29,6 +29,9 @@
 | FR-023 | Data Coverage Report           | As an analyst, I want to see what percentage of matches has each statistic populated per league and season so that gaps are visible before modelling.                       | Medium   | Open   |
 | FR-024 | Incomplete Match Detection     | As a data engineer, I want to identify played matches with no associated statistics so that they can be selectively recollected.                                            | Medium   | Open   |
 | FR-025 | Historical Absence Derivation  | As a modeler, I want player unavailability periods derived from absence in lineups so that an absence signal exists without an injury feed.                                 | Low      | Open   |
+| FR-026 | Collection Scope Declaration   | As a data engineer, I want to declare which competitions and seasons the system collects so that every collection knows what it is expected to work on.                     | High     | Open   |
+| FR-027 | Source Registration            | As a data engineer, I want to register each source with the address it is reached at and the delay it requires between requests so that collection respects its limits.     | High     | Open   |
+| FR-028 | Source Coverage Declaration    | As a data engineer, I want to record which statistics a source publishes for a competition so that data it never offers is not reported as a gap to be filled.              | Medium   | Open   |
 
 ## Non-Functional Requirements
 

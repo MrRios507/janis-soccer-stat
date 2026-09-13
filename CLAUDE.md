@@ -64,6 +64,9 @@ Every AIUP artifact is written in **English**. This is not cosmetic: the officia
 `As a [role], I want [goal] so that [benefit]`, and `Priority`, `Status`, `Category`,
 `Data Type` and `Validation Rules` are closed English vocabularies.
 
+Commit messages, branch names and pull request descriptions are in **English**, so that
+the repository history reads in the same language as the artifacts it describes.
+
 Conversation with the user is in **Spanish**.
 
 ## Editing `entity_model.md`

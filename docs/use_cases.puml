@@ -35,6 +35,8 @@ rectangle "janis-soccer-stat" {
     usecase "UC-013\nDerive Player Absences" as UC013
     ' Traces to FR-010
     usecase "UC-014\nResolve Held Record" as UC014
+    ' Traces to FR-026, FR-027, FR-028
+    usecase "UC-015\nConfigure Collection Scope" as UC015
 }
 
 engineer --> UC001
@@ -44,6 +46,7 @@ engineer --> UC004
 engineer --> UC005
 engineer --> UC006
 engineer --> UC014
+engineer --> UC015
 
 operator --> UC007
 
@@ -71,6 +74,14 @@ note bottom of UC014
   cannot bind confidently. UC-014 is
   where a person clears that queue,
   for teams, matches and players alike.
+end note
+
+note bottom of UC015
+  UC-015 establishes the preconditions
+  every collection use case assumes:
+  the competition, the seasons and the
+  source must be known before UC-001
+  to UC-004 can run at all.
 end note
 
 @enduml

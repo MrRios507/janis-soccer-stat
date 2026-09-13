@@ -39,6 +39,8 @@ because each places different demands on the system.
 
 ### In scope
 
+- Declaration of which competitions and seasons the system collects, which sources
+  feed them, and what each of those sources actually publishes.
 - Loading historical results, basic statistics and odds from published files.
 - Post-match collection of individual shots with expected goals.
 - Post-match collection of advanced team statistics, lineups and minutes played.
