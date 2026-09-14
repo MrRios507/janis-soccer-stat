@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# uv-managed virtual environment
+.venv/
+
+# Secrets — never commit real credentials (NFR-010)
+.env
+
+# Editors / OS
+.DS_Store
