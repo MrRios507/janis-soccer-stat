@@ -4,11 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-Specifications only. There is no source code, no build, no lint, and no test command yet.
-Do not invent them — when the first code lands, replace this section with the real commands.
+The data layer exists; nothing else does yet. A `uv`-managed Python project lives under
+`src/janis_soccer_stat/`, with SQLAlchemy models in `src/janis_soccer_stat/models/` mapping
+every entity in `docs/entity_model.md`, Alembic migrations in `alembic/versions/`, and a
+`docker-compose.yml` running PostgreSQL 16 locally. No scraping, parsing, or prediction code
+exists yet. Do not invent commands beyond the ones below — extend this section as real ones
+appear.
 
-The planned stack is fixed by constraints in `docs/requirements.md`: PostgreSQL 16+ (C-001)
-and Python 3.11+ (C-002).
+- Install dependencies: `uv sync`
+- Start the local database: `docker compose up -d` (copy `.env.example` to `.env` first)
+- Apply migrations: `uv run alembic upgrade head`
+- After changing a model, generate a migration: `uv run alembic revision --autogenerate -m "..."`
+- Run tests: `uv run pytest` (no tests written yet)
+- No linter or formatter is configured yet.
+
+PostgreSQL 16+ (C-001) and Python 3.11+ (C-002) are enforced concretely in
+`docker-compose.yml` (`image: postgres:16`) and `pyproject.toml` (`requires-python`).
 
 ## What this project is
 
