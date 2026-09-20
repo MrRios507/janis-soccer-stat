@@ -6,7 +6,7 @@
 **Use Case Name:** Collect Match Shots  
 **Primary Actor:** Data Engineer  
 **Goal:** Bring the individual shots of every match of a season into the database so that each team's expected goals are derived from its own shots rather than taken already aggregated  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

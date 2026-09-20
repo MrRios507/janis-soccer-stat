@@ -61,15 +61,3 @@ class Season(Base):
             name="end_after_start",
         ),
     )
-
-
-class SeasonTeam(Base):
-    __tablename__ = "season_teams"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    season_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("seasons.id"), nullable=False)
-    team_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("teams.id"), nullable=False)
-    final_position: Mapped[Optional[int]] = mapped_column(Integer)
-    points: Mapped[Optional[int]] = mapped_column(Integer)
-
-    __table_args__ = (UniqueConstraint("season_id", "team_id"),)

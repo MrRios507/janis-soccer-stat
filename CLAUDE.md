@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current state
 
-The data layer exists; nothing else does yet. A `uv`-managed Python project lives under
-`src/janis_soccer_stat/`, with SQLAlchemy models in `src/janis_soccer_stat/models/` mapping
-every entity in `docs/entity_model.md`, Alembic migrations in `alembic/versions/`, and a
-`docker-compose.yml` running PostgreSQL 16 locally. No scraping, parsing, or prediction code
-exists yet. Do not invent commands beyond the ones below — extend this section as real ones
-appear.
+Increment 1, Match History, is the increment under way; `docs/vision.md` declares what each
+increment delivers. Its data layer exists; nothing else does yet. A `uv`-managed Python
+project lives under `src/janis_soccer_stat/`, with SQLAlchemy models in
+`src/janis_soccer_stat/models/` mapping the thirteen entities of `docs/entity_model.md`, one
+Alembic migration in `alembic/versions/`, and a `docker-compose.yml` running PostgreSQL 16
+locally. No scraping, parsing, or prediction code exists yet. Do not invent commands beyond
+the ones below — extend this section as real ones appear.
 
 - Install dependencies: `uv sync`
 - Start the local database: `docker compose up -d` (copy `.env.example` to `.env` first)
@@ -32,6 +33,14 @@ and honestly measured against the betting market.
 This project follows the AI Unified Process (https://unifiedprocess.ai). Before making
 product, domain, or architecture decisions, read `docs/vision.md`, `docs/requirements.md`
 and `docs/entity_model.md`.
+
+The work is delivered in increments (C-012), named in `docs/vision.md` with the requirements
+and use cases each one covers. Only the current increment is specified in full: later
+requirements sit at status `Deferred`, so do their use case specifications, and
+`docs/entity_model.md` describes only the entities already built. Opening the next increment
+is a specification pass of its own — reinstate its entities in the entity model, move its
+requirements and use cases off `Deferred`, then write code. Design deferred out of the
+artifacts is not lost: recover it with `git log -p docs/entity_model.md`.
 
 1. Requirements derive from the vision. Anything absent from `docs/vision.md` is at risk
    of being dropped when a downstream artifact is regenerated — add it upstream first.
@@ -102,7 +111,8 @@ tooling:
 
 These are the rules that make the project work; breaking them is not caught by tests.
 
-**The `as_of` cutoff.** Every row in `MATCH_FEATURES` and `PREDICTIONS` carries `as_of`.
+**The `as_of` cutoff.** (Increment 5, with the entities it introduces.) Every row in
+`MATCH_FEATURES` and `PREDICTIONS` carries `as_of`.
 Computation may read only matches kicking off before it and odds recorded before it. This is
 the sole defense against data leakage, which is what produces a model scoring 70% in backtest
 and 48% in production. Evaluation must be temporal, never a random split.
@@ -111,7 +121,9 @@ and 48% in production. Evaluation must be temporal, never a random split.
 never `home_shots`/`away_shots` columns. Goals live only in `MATCHES`; join, do not duplicate.
 
 **Collection is idempotent.** Every write is an upsert keyed on a uniqueness constraint.
-Reruns are normal and must never duplicate rows.
+Reruns are normal and must never duplicate rows. In increment 1 a match is keyed on its
+season and its home and away teams (UC-001 BR-001); a publisher's own reference for it
+arrives with the external identifier mapping of increment 3.
 
 **Raw documents are retained.** Parsers will be wrong and the error will surface months
 later. Reprocess from `RAW_DOCUMENTS`; never re-request the source to fix a parse bug.
@@ -120,11 +132,14 @@ later. Reprocess from `RAW_DOCUMENTS`; never re-request the source to fix a pars
 manual review. One wrongly mapped team silently corrupts the entire history of two clubs.
 
 **xG is derived from shots, not ingested pre-aggregated**, where the source exposes shot-level
-data, so `SHOTS` and `MATCH_TEAM_STATS.xg` must agree within a source.
+data, so `SHOTS` and `MATCH_TEAM_STATS.xg` must agree within a source. Both arrive with
+increment 3; increment 1 stores no expected goals at all rather than a pre-aggregated one.
 
 ## Data sources
 
-Three free sources, each with a distinct job. They complement rather than compete.
+Three free sources, each with a distinct job. They complement rather than compete. Increment
+1 collects from football-data.co.uk alone; Understat arrives with increment 3 and FBref with
+increment 4.
 
 | Source | Job | Covers | Suggested `rate_limit_ms` |
 |---|---|---|---|
@@ -155,9 +170,10 @@ To convert odds to probabilities, remove the operator's margin:
 `p = (1 / price) / sum of (1 / price) over the three outcomes`. Score with log loss, never
 accuracy — accuracy rewards always naming the favourite.
 
-Two indexes carry the whole workload: `(team_id, kickoff_utc)` on matches, which recent-form
-computation hits constantly, and a trigram index on the normalized team alias, which backs
-team name resolution.
+Two indexes carry the whole workload, and both already exist: matches is indexed on
+`(home_team_id, kickoff_utc)` and `(away_team_id, kickoff_utc)`, which recent-form
+computation hits constantly, and `team_aliases.normalized` carries a trigram index, which
+backs team name resolution and needs the `pg_trgm` extension the migration creates.
 
 First model should be Dixon-Coles or bivariate Poisson over expected goals — interpretable,
 trains on little data, and a fair baseline before anything heavier.

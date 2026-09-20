@@ -5,7 +5,7 @@
 **Use Case ID:** UC-015  
 **Use Case Name:** Configure Collection Scope  
 **Primary Actor:** Data Engineer  
-**Goal:** Declare which competitions and seasons the system collects, which sources feed them and what each of those sources publishes, so that every collection knows what it is expected to work on  
+**Goal:** Declare which competitions and seasons the system collects and which sources feed them, so that every collection knows what it is expected to work on  
 **Status:** Draft
 
 ## Preconditions
@@ -18,12 +18,10 @@
 2. System registers the competition.
 3. Data Engineer states the seasons of that competition to be collected, each with its label and its window of play.
 4. System registers the seasons and marks the one currently being played.
-5. Data Engineer states a source that publishes data for the competition, with the address it is reached at and the shortest delay it requires between requests.
-6. System registers the source and records the reference under which that source identifies the competition.
-7. Data Engineer states which statistics the source publishes for the competition, and from which season each became available.
-8. System records what the source offers, so that anything it never publishes is not later reported as a gap.
-9. System confirms that the competition, its seasons and its sources are ready to be collected.
-10. Data Engineer confirms that the scope is complete.
+5. Data Engineer states a source the system should collect from, with the address it is reached at and the shortest delay it requires between requests.
+6. System registers the source with its address and its required delay.
+7. System confirms that the competition, its seasons and its sources are ready to be collected.
+8. Data Engineer confirms that the scope is complete.
 
 ## Alternative Flows
 
@@ -62,24 +60,13 @@
 2. System stops offering it for collection while keeping everything already gathered for it.
 3. Use case ends.
 
-### A5: Source Offers Nothing For The Competition
-
-**Trigger:** The source turns out to publish nothing for the competition (step 7)  
-**Flow:**
-
-1. System records that the source offers nothing for that competition.
-2. System stops pairing the two for collection.
-3. Use case continues at step 9.
-
 ## Postconditions
 
 ### Success Postconditions
 
 - The competition is registered, and each of its declared seasons carries its window of play
 - Exactly one season of the competition is marked as currently being played
-- Every source feeding the competition is registered with its address and its required delay
-- The reference each source uses for the competition is recorded
-- What each source publishes for the competition is recorded season by season
+- Every source the system collects from is registered with its address and its required delay
 - The preconditions that the collection use cases assume now hold, so they can run
 
 ### Failure Postconditions
@@ -102,10 +89,6 @@ Withdrawing a competition stops future collection but keeps everything already g
 
 A source with no stated limit is given the most cautious delay rather than none. Being blocked by a source costs far more than collecting slowly, and a source that has not published a limit still has one.
 
-### BR-004: What A Source Never Offers Is Recorded As Such
-
-A statistic a source does not publish is recorded as not offered, not left unsaid. This is what allows a coverage report to separate data still to be collected from data that will never exist.
-
-### BR-005: Seasons Of One Competition Do Not Overlap
+### BR-004: Seasons Of One Competition Do Not Overlap
 
 Two seasons of the same competition never share a window of play, so that any match falls in exactly one season.

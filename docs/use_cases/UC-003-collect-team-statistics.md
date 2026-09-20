@@ -6,7 +6,7 @@
 **Use Case Name:** Collect Team Statistics  
 **Primary Actor:** Data Engineer  
 **Goal:** Bring the advanced team statistics of every match of a season into the database so that the model has variables that do not derive from shots  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

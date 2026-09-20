@@ -5,7 +5,7 @@
 **Use Case ID:** UC-014  
 **Use Case Name:** Resolve Held Record  
 **Primary Actor:** Data Engineer  
-**Goal:** Decide, for every published value that collection could not bind on its own, which known team, match or player it refers to, so that the records waiting on it can finally be stored  
+**Goal:** Decide, for every published team name that collection could not bind on its own, which known team it refers to, so that the records waiting on it can finally be stored  
 **Status:** Draft
 
 ## Preconditions
@@ -16,11 +16,11 @@
 ## Main Success Scenario
 
 1. Data Engineer asks for the records waiting to be resolved.
-2. System lists them grouped by kind and by publisher, each showing the published value and where it appeared.
+2. System lists them grouped by publisher, each showing the published name and where it appeared.
 3. Data Engineer selects a held record.
 4. System shows the known candidates it weighed and how closely each one matched.
-5. Data Engineer binds the published value to one of the known candidates.
-6. System records the binding against the publisher, so that later collections reuse it without asking again.
+5. Data Engineer binds the published name to one of the known candidates.
+6. System records the name as an alternative name of that team, so that later collections reuse it without asking again.
 7. System releases the records that were waiting on that value and stores them.
 8. System marks the held record as resolved, noting when.
 9. System reports how many records were released.
@@ -36,34 +36,25 @@
 1. System states that the queue is empty.
 2. Use case ends.
 
-### A2: The Value Names Something New
+### A2: The Name Belongs To A New Team
 
-**Trigger:** No known candidate is the right one, and the value names a genuinely new team or player (step 5)  
+**Trigger:** No known candidate is the right one, and the name belongs to a genuinely new club (step 5)  
 **Flow:**
 
-1. Data Engineer registers the new team or player.
-2. System binds the published value to what was just registered.
+1. Data Engineer registers the new team.
+2. System binds the published name to the team just registered.
 3. Use case continues at step 6.
 
-### A3: The Value Is Not Worth Keeping
+### A3: The Name Is Not Worth Keeping
 
-**Trigger:** Data Engineer judges that the value refers to something outside the scope being collected (step 5)  
+**Trigger:** Data Engineer judges that the name refers to a club outside the scope being collected (step 5)  
 **Flow:**
 
 1. Data Engineer marks the held record as discarded.
 2. System leaves the waiting records unstored and stops offering the value for review.
 3. Use case continues at step 9.
 
-### A4: A Held Match Has No Counterpart
-
-**Trigger:** The held value names a match, and no stored match corresponds to it (step 5)  
-**Flow:**
-
-1. System refuses to create a match from the review.
-2. Data Engineer leaves the record waiting until the historical load supplies the match.
-3. Use case continues at step 9.
-
-### A5: Released Records Still Cannot Be Stored
+### A4: Released Records Still Cannot Be Stored
 
 **Trigger:** A record released by the binding fails to store for another reason (step 7)  
 **Flow:**
@@ -76,8 +67,8 @@
 
 ### Success Postconditions
 
-- Each resolved value is bound to exactly one known team, match or player
-- The binding is recorded against its publisher, so later collections meeting the same value bind it without review
+- Each resolved name is bound to exactly one known team
+- The name is recorded as an alternative name of that team, so later collections meeting it bind it without review
 - The records that were waiting on the value are stored and attributed to the bound entity
 - The held record carries the moment it was resolved and no longer appears in the queue
 
@@ -94,14 +85,14 @@
 
 A record reaches this queue precisely because the system was not confident enough to decide. Letting it decide here anyway, with the same information, would defeat the purpose of holding it.
 
-### BR-002: A Resolution Binds The Publisher, Not Just The Record
+### BR-002: A Resolution Outlives The Record It Cleared
 
-Resolving a value records a binding for that publisher, so every later occurrence is bound automatically. Otherwise the same name would return to the queue on every collection.
+Resolving a name records it as an alternative name of the team, so every later occurrence is bound automatically. Otherwise the same name would return to the queue on every collection.
 
 ### BR-003: Discarding Is Not Deleting
 
 A discarded record stays visible, marked as discarded, and what depended on it stays unstored. A value judged irrelevant today may turn out to matter, and silently erasing it would hide that data was ever dropped.
 
-### BR-004: Resolution Never Creates A Match
+### BR-004: Only Team Names Are Held
 
-A new team or player may be registered here, but a match may not. Matches carry a result and odds that only the historical load provides, so a match created from a review would be permanently incomplete. See UC-002 BR-003.
+In increment 1 the only value a collection can fail to bind is a team name, so that is the only kind this queue carries. Players and a publisher's own match references arrive with the increments that collect them, and each widens this queue rather than changing how it works.

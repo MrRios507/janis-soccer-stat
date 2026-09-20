@@ -5,7 +5,7 @@
 **Use Case ID:** UC-001  
 **Use Case Name:** Load Historical Match Data  
 **Primary Actor:** Data Engineer  
-**Goal:** Bring a full season of published match results, basic statistics and closing odds into the database so that the season becomes available for analysis and modelling  
+**Goal:** Bring a full season of published match results and basic team statistics into the database so that the season becomes available for analysis  
 **Status:** Draft
 
 ## Preconditions
@@ -24,9 +24,8 @@
 6. System identifies the home team and the away team of each record from the published names.
 7. System records each match with its date, round and final score, updating the matches it already knows.
 8. System records the reported team statistics as one entry per team per match.
-9. System records the closing odds quoted by each betting operator for each match.
-10. System closes the collection run, reporting how many records were found and how many were stored or updated.
-11. Data Engineer confirms that the season is available for analysis.
+9. System closes the collection run, reporting how many records were found and how many were stored or updated.
+10. Data Engineer confirms that the season is available for analysis.
 
 ## Alternative Flows
 
@@ -66,22 +65,12 @@
 1. System records the match as scheduled and leaves its score empty.
 2. Use case continues at step 8.
 
-### A5: No Odds Quoted
-
-**Trigger:** No betting operator quoted the match (step 9)  
-**Flow:**
-
-1. System records the match without odds.
-2. System notes the absence so that it appears as a coverage gap.
-3. Use case continues at step 10.
-
 ## Postconditions
 
 ### Success Postconditions
 
 - Every published match of the season is stored, carrying its final score when the match was played and marked as scheduled when it was not
 - The reported team statistics are stored as one entry per team per match
-- Closing odds are stored for every match that a betting operator quoted
 - The obtained records are retained in their original form and can be interpreted again without contacting the publisher
 - The collection run is closed as successful, carrying the count of records found and the count stored or updated
 
@@ -96,20 +85,16 @@
 
 ### BR-001: Reloading Never Duplicates
 
-A match that is already stored is updated in place rather than added again. The match is recognised by the reference the publisher itself gives it, so a season may be reloaded any number of times without changing the number of stored matches.
+A match that is already stored is updated in place rather than added again. The match is recognised by its season and by which team played at home against which team away, which identifies it in a league where every pair of teams meets once at each ground. A season may therefore be reloaded any number of times without changing the number of stored matches.
 
 ### BR-002: Team Identification Never Guesses
 
 A published team name is only bound to a known team when the match is confident. Below that confidence the record is set aside for manual review. A wrongly bound team corrupts the entire history of two clubs, so an unresolved record is always preferable to a wrong one.
 
-### BR-003: Closing Odds Are The Market Reference
-
-When a publisher quotes both an opening and a closing price, only the closing price counts as the market reference used to judge the model. Opening prices may be stored, but they never serve as the benchmark.
-
-### BR-004: A Match Without A Result Is Not An Error
+### BR-003: A Match Without A Result Is Not An Error
 
 A published record with no final score describes a match that has not been played. It is stored as a scheduled match so that it can later receive a prediction.
 
-### BR-005: Goals Are Stored Once
+### BR-004: Goals Are Stored Once
 
 Goals belong to the match. They are never repeated inside the team statistics, so that the two can never disagree.

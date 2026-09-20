@@ -6,7 +6,7 @@
 **Use Case Name:** Predict Scheduled Match  
 **Primary Actor:** Analyst  
 **Goal:** Obtain the probability of a home win, a draw and an away win for a match that has not been played, before it starts  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

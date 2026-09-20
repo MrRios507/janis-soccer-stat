@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -40,4 +41,14 @@ class TeamAlias(Base):
     alias: Mapped[str] = mapped_column(String(100), nullable=False)
     normalized: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    __table_args__ = (UniqueConstraint("team_id", "normalized"),)
+    __table_args__ = (
+        UniqueConstraint("team_id", "normalized"),
+        # FR-009: UC-005 step 5 compares a reduced published name against every
+        # known alias, which is a similarity search, not an equality one.
+        Index(
+            "ix_team_aliases_normalized_trgm",
+            "normalized",
+            postgresql_using="gin",
+            postgresql_ops={"normalized": "gin_trgm_ops"},
+        ),
+    )

@@ -65,6 +65,59 @@ because each places different demands on the system.
 - Injuries and lineups confirmed before kickoff, for lack of a free source.
 - Paid data sources.
 
+## Delivery increments
+
+The scope above is the destination, not the first delivery. It is built in increments, each
+one a slice that runs from end to end and is worth having on its own. Only the current
+increment is specified in full: a requirement or use case belonging to a later one is held
+at status `Deferred`, and the entity model describes only what the current increment has
+built. Deferred design is not lost, it is simply not yet part of the system, and it is
+reinstated in the pass that opens its increment.
+
+### Increment 1: Match history
+
+Declare the competitions, seasons and publisher the system works on; load the published
+results and basic team statistics of a season; bind the published team names to known teams
+and hold whatever cannot be bound with confidence; leave every run auditable and every
+document reinterpretable without contacting the publisher. Delivers a chronological match
+history per team, queryable on its own.
+
+Requirements FR-001, FR-005, FR-006, FR-007, FR-009, FR-010, FR-011, FR-012, FR-014,
+FR-022, FR-026, FR-027, NFR-001, NFR-003, NFR-005, NFR-008, NFR-009, NFR-010, NFR-011.
+Use cases UC-015, UC-001, UC-005, UC-014, UC-007, UC-006.
+
+### Increment 2: Market reference
+
+Read the closing prices quoted for every match already loaded, and the probability they
+imply, out of the documents increment 1 retained. No publisher is contacted, which is the
+first real proof that retention and reinterpretation work.
+
+Requirements FR-013. Extends UC-001; adds no use case.
+
+### Increment 3: Expected goals
+
+Add a second publisher, shot by shot, and with it the need to recognise the same team and
+the same match under two different publishers' own references. Expected goals are summed
+from the shots rather than taken pre-aggregated.
+
+Requirements FR-002, FR-008, NFR-004. Use case UC-002.
+
+### Increment 4: Advanced statistics and squads
+
+Add the publisher of players, lineups, minutes played and the team statistics that do not
+derive from shots, and report what is covered and what is missing per league and season.
+
+Requirements FR-003, FR-004, FR-023, FR-024, FR-028, NFR-006. Use cases UC-003, UC-004,
+UC-008.
+
+### Increment 5: Prediction
+
+Compute features under an explicit cutoff instant, train and register models, evaluate them
+temporally against the closing prices, and issue probabilities for matches not yet played.
+
+Requirements FR-015, FR-016, FR-017, FR-018, FR-019, FR-020, FR-021, FR-025, NFR-002,
+NFR-007. Use cases UC-009, UC-010, UC-011, UC-012, UC-013.
+
 ## Constraints
 
 - Only free, publicly accessible data sources may be used.
@@ -74,6 +127,7 @@ because each places different demands on the system.
   the corresponding source.
 - The project is developed by one person without full-time dedication.
 - Execution happens on a local machine, with no cloud infrastructure.
+- Work is delivered in increments; nothing is built before the increment that declares it.
 
 ## Success measures
 

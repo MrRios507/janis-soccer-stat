@@ -6,7 +6,7 @@
 **Use Case Name:** Train Prediction Model  
 **Primary Actor:** Modeler  
 **Goal:** Fit a model over a bounded period of past matches and record it with everything needed to reproduce and compare it later  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

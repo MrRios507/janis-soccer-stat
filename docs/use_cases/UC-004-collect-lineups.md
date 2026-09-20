@@ -6,7 +6,7 @@
 **Use Case Name:** Collect Lineups  
 **Primary Actor:** Data Engineer  
 **Goal:** Bring the squad each team fielded in every match of a season, with the minutes each player spent on the pitch, so that historical squad availability can later be derived  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

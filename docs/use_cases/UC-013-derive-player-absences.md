@@ -6,7 +6,7 @@
 **Use Case Name:** Derive Player Absences  
 **Primary Actor:** Modeler  
 **Goal:** Work out when a player was unavailable by noticing that he stopped appearing in his team's squads, so that an absence signal exists without any publisher of injuries  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

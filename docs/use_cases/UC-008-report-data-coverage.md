@@ -6,7 +6,7 @@
 **Use Case Name:** Report Data Coverage  
 **Primary Actor:** Analyst  
 **Goal:** See how much of each statistic is actually present per league and season, so that gaps in the data are known before they are mistaken for findings in a model  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

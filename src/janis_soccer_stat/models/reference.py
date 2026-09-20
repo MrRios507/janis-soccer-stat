@@ -46,13 +46,6 @@ class Referee(Base):
     country_id: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("countries.id"))
 
 
-class Bookmaker(Base):
-    __tablename__ = "bookmakers"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-
-
 class Source(Base):
     __tablename__ = "sources"
 

@@ -5,7 +5,6 @@ from typing import Optional
 
 from sqlalchemy import (
     BigInteger,
-    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -13,7 +12,6 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UniqueConstraint,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -84,43 +82,6 @@ class RawDocument(Base):
     )
 
 
-class TeamSource(Base):
-    __tablename__ = "team_sources"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    team_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("teams.id"), nullable=False)
-    source_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sources.id"), nullable=False)
-    external_id: Mapped[str] = mapped_column(String(100), nullable=False)
-    external_name: Mapped[Optional[str]] = mapped_column(String(200))
-
-    __table_args__ = (UniqueConstraint("source_id", "external_id"),)
-
-
-class MatchSource(Base):
-    __tablename__ = "match_sources"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    match_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("matches.id"), nullable=False)
-    source_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sources.id"), nullable=False)
-    external_id: Mapped[str] = mapped_column(String(100), nullable=False)
-    url: Mapped[Optional[str]] = mapped_column(String(500))
-
-    __table_args__ = (UniqueConstraint("source_id", "external_id"),)
-
-
-class CompetitionSource(Base):
-    __tablename__ = "competition_sources"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    competition_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("competitions.id"), nullable=False
-    )
-    source_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sources.id"), nullable=False)
-    external_id: Mapped[str] = mapped_column(String(100), nullable=False)
-
-    __table_args__ = (UniqueConstraint("source_id", "external_id"),)
-
-
 class HeldRecord(Base):
     __tablename__ = "held_records"
 
@@ -134,14 +95,15 @@ class HeldRecord(Base):
     context: Mapped[Optional[str]] = mapped_column(String(500))
     candidates: Mapped[Optional[str]] = mapped_column(String(2000))
     status: Mapped[str] = mapped_column(String(20), nullable=False)
-    # Polymorphic reference to TEAMS, MATCHES or PLAYERS depending on held_kind:
-    # no single target table, so this cannot be a real ForeignKey.
+    # Polymorphic reference, kept as a plain column: held_kind names only teams
+    # in increment 1, and widens to matches and players with the increments that
+    # collect them (UC-014 BR-004).
     resolved_ref: Mapped[Optional[int]] = mapped_column(BigInteger)
     held_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     resolved_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
-        CheckConstraint("held_kind IN ('team','match','player')", name="held_kind_valid"),
+        CheckConstraint("held_kind IN ('team')", name="held_kind_valid"),
         CheckConstraint(
             "status IN ('pending','resolved','discarded')", name="status_valid"
         ),
@@ -157,25 +119,5 @@ class HeldRecord(Base):
             "published_value",
             unique=True,
             postgresql_where=text("status = 'pending'"),
-        ),
-    )
-
-
-class SourceCoverage(Base):
-    __tablename__ = "source_coverage"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    source_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("sources.id"), nullable=False)
-    competition_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("competitions.id"), nullable=False
-    )
-    statistic: Mapped[str] = mapped_column(String(50), nullable=False)
-    is_offered: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    first_season: Mapped[Optional[str]] = mapped_column(String(20))
-
-    __table_args__ = (
-        UniqueConstraint("source_id", "competition_id", "statistic"),
-        CheckConstraint(
-            "is_offered OR first_season IS NULL", name="no_first_season_when_not_offered"
         ),
     )

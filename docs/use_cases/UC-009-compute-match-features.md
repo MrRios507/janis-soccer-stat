@@ -6,7 +6,7 @@
 **Use Case Name:** Compute Match Features  
 **Primary Actor:** Modeler  
 **Goal:** Produce the predictive variables of a match from information that existed before a stated cutoff, so that a model is never trained on anything that was unknowable at the time  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 

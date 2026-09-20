@@ -6,7 +6,7 @@
 **Use Case Name:** Evaluate Model Against Market  
 **Primary Actor:** Modeler  
 **Goal:** Score a recorded model and the betting market on the same played matches, so that it is known whether the model carries information the market does not already price in  
-**Status:** Draft
+**Status:** Deferred
 
 ## Preconditions
 
