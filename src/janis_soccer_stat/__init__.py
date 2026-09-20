@@ -1,2 +1,5 @@
 def main() -> None:
-    print("Hello from janis-soccer-stat!")
+    """Entry point of the janis-soccer-stat command."""
+    from .cli import main as run
+
+    raise SystemExit(run())

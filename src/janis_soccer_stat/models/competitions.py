@@ -32,6 +32,9 @@ class Competition(Base):
     is_collected: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     __table_args__ = (
+        # UC-015 A1 recognises a competition already declared, and BR-001 relies
+        # on it: without a natural key a typo would silently create a second one.
+        UniqueConstraint("name", "country_id"),
         CheckConstraint("format IN ('league','cup','group_knockout')", name="format_valid"),
         CheckConstraint(
             "scope IN ('domestic','continental','international')", name="scope_valid"

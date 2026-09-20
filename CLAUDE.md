@@ -5,19 +5,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Current state
 
 Increment 1, Match History, is the increment under way; `docs/vision.md` declares what each
-increment delivers. Its data layer exists; nothing else does yet. A `uv`-managed Python
+increment delivers. Its data layer and its collection scope exist. A `uv`-managed Python
 project lives under `src/janis_soccer_stat/`, with SQLAlchemy models in
-`src/janis_soccer_stat/models/` mapping the thirteen entities of `docs/entity_model.md`, one
-Alembic migration in `alembic/versions/`, and a `docker-compose.yml` running PostgreSQL 16
-locally. No scraping, parsing, or prediction code exists yet. Do not invent commands beyond
-the ones below — extend this section as real ones appear.
+`src/janis_soccer_stat/models/` mapping the thirteen entities of `docs/entity_model.md`,
+Alembic migrations in `alembic/versions/`, and a `docker-compose.yml` running PostgreSQL 16
+locally. `scope.py` implements UC-015 over the declaration in `collection_scope.toml`, and
+`seeding.py` loads the countries that are its precondition. No scraping, parsing, or
+prediction code exists yet. Do not invent commands beyond the ones below — extend this
+section as real ones appear.
 
 - Install dependencies: `uv sync`
 - Start the local database: `docker compose up -d` (copy `.env.example` to `.env` first)
 - Apply migrations: `uv run alembic upgrade head`
 - After changing a model, generate a migration: `uv run alembic revision --autogenerate -m "..."`
-- Run tests: `uv run pytest` (no tests written yet)
+- Confirm schema and models agree: `uv run alembic check`
+- Register the countries: `uv run janis-soccer-stat seed-countries`
+- Apply the collection scope (UC-015): `uv run janis-soccer-stat scope-apply`
+- See what is in scope: `uv run janis-soccer-stat scope-show`
+- Run tests: `uv run pytest` (they need the local database, and skip without it)
 - No linter or formatter is configured yet.
+
+Every one of those commands is an upsert and may be rerun. The tests run inside a
+transaction that is rolled back, so they leave the local database as they found it.
 
 PostgreSQL 16+ (C-001) and Python 3.11+ (C-002) are enforced concretely in
 `docker-compose.yml` (`image: postgres:16`) and `pyproject.toml` (`requires-python`).
@@ -143,9 +152,14 @@ increment 4.
 
 | Source | Job | Covers | Suggested `rate_limit_ms` |
 |---|---|---|---|
-| football-data.co.uk | Results, odds, basic stats | ~1993 onward | 0 (plain file download) |
+| football-data.co.uk | Results, odds, basic stats | ~1993 onward | 2000 (assumed) |
 | Understat | Shot-level expected goals | Big five, 2014-15 onward | 2000 |
 | FBref | Players, lineups, advanced team stats | Advanced stats ~2017-18 onward | 6000 |
+
+football-data.co.uk states no limit of its own, so its delay is the cautious default and is
+recorded as assumed: UC-015 BR-003 gives a source with no stated limit the most cautious delay
+this system knows, never none, and a plain file download is no exception. FBref does publish a
+bot policy — read it and take its number, not this one.
 
 Parsing traps, each of which costs an afternoon if unknown:
 

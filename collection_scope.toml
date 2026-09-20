@@ -1,0 +1,73 @@
+# Collection scope: what the system is expected to work on.
+#
+# This file is the Data Engineer's declaration in UC-015. Applying it registers
+# the competitions, their seasons and the sources that feed them, which are the
+# preconditions every collection use case assumes. Editing it and applying it
+# again updates what is already declared instead of duplicating it.
+#
+#     uv run janis-soccer-stat scope-apply
+#
+# Countries must be seeded first (`uv run janis-soccer-stat seed-countries`).
+
+[seasons]
+# Seasons are declared per competition from `first` to `last` inclusive, by the
+# calendar year each one begins in. 2005 onward is what the vision asks for:
+# closing odds coverage on every match loaded from 2005-06.
+first = 2005
+last = 2026
+current = 2026
+
+[[competitions]]
+name = "Premier League"
+country = "ENG"
+format = "league"
+scope = "domestic"
+tier = 1
+gender = "male"
+is_collected = true
+
+[[competitions]]
+name = "La Liga"
+country = "ESP"
+format = "league"
+scope = "domestic"
+tier = 1
+gender = "male"
+is_collected = true
+
+[[competitions]]
+name = "Bundesliga"
+country = "GER"
+format = "league"
+scope = "domestic"
+tier = 1
+gender = "male"
+is_collected = true
+
+[[competitions]]
+name = "Serie A"
+country = "ITA"
+format = "league"
+scope = "domestic"
+tier = 1
+gender = "male"
+is_collected = true
+
+[[competitions]]
+name = "Ligue 1"
+country = "FRA"
+format = "league"
+scope = "domestic"
+tier = 1
+gender = "male"
+is_collected = true
+
+[[sources]]
+slug = "football-data"
+name = "football-data.co.uk"
+base_url = "https://www.football-data.co.uk/"
+# The publisher states no request limit, so the most cautious delay it knows
+# applies rather than none, and it is recorded as assumed (UC-015 A3, BR-003).
+rate_limit_ms = 2000
+rate_limit_is_assumed = true
+is_active = true

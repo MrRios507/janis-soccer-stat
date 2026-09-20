@@ -35,7 +35,7 @@ Countries and territories used to classify teams, competitions, venues and refer
 |---------------|----------------------------------------------------|-----------|------------------|-----------------------------------------------------------|
 | id            | Unique identifier of the country                   | Long      | 19               | Primary Key, Sequence                                     |
 | name          | Official name of the country                       | String    | 100              | Not Null, Unique                                          |
-| iso3          | Three letter ISO country code                      | String    | 3                | Not Null, Unique                                          |
+| fifa_code     | Three letter code of the national football association | String | 3               | Not Null, Unique                                          |
 | confederation | Football confederation the country belongs to      | String    | 20               | Not Null, Values: UEFA, CONMEBOL, CONCACAF, CAF, AFC, OFC |
 
 ### TEAMS
@@ -106,7 +106,7 @@ Football tournaments, covering domestic leagues, cups and continental competitio
 | gender        | Gender category of the competition                                   | String    | 10               | Not Null, Values: male, female                         |
 | is_collected  | Whether the system currently collects this competition               | Boolean   | 1                | Not Null                                               |
 
-**Constraints:** A competition withdrawn from collection keeps every season, match and statistic already gathered for it.
+**Constraints:** The combination of name and organising country must be unique. A competition withdrawn from collection keeps every season, match and statistic already gathered for it.
 
 ### SEASONS
 

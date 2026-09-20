@@ -1,0 +1,34 @@
+# Countries the system classifies competitions, teams, venues and referees by.
+#
+# The code is the three letter football association code, not ISO 3166: England,
+# Scotland and Wales are countries in this domain and ISO gives them none.
+#
+# Only the hosts of the five collected competitions are listed. Wales and Monaco
+# contribute clubs to those leagues but are not needed yet, because increment 1
+# never populates TEAMS.country_id: football-data publishes names alone. Add them
+# here when FBref brings nationalities in increment 4.
+
+[[countries]]
+name = "England"
+fifa_code = "ENG"
+confederation = "UEFA"
+
+[[countries]]
+name = "Spain"
+fifa_code = "ESP"
+confederation = "UEFA"
+
+[[countries]]
+name = "Germany"
+fifa_code = "GER"
+confederation = "UEFA"
+
+[[countries]]
+name = "Italy"
+fifa_code = "ITA"
+confederation = "UEFA"
+
+[[countries]]
+name = "France"
+fifa_code = "FRA"
+confederation = "UEFA"

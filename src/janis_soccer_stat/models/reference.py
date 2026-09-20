@@ -14,7 +14,9 @@ class Country(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    iso3: Mapped[str] = mapped_column(String(3), nullable=False, unique=True)
+    # Football associations, not ISO 3166: England, Scotland and Wales are
+    # countries here and have no ISO alpha-3 code of their own.
+    fifa_code: Mapped[str] = mapped_column(String(3), nullable=False, unique=True)
     confederation: Mapped[str] = mapped_column(String(20), nullable=False)
 
     __table_args__ = (
